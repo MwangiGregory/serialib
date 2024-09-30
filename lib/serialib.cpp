@@ -357,11 +357,20 @@ char serialib::openDevice(const char *Device, const unsigned int Bauds,
 
 bool serialib::isDeviceOpen()
 {
-#if defined (_WIN32) || defined( _WIN64)
-    return hSerial != INVALID_HANDLE_VALUE;
+#if defined(_WIN32) || defined(_WIN64)
+    DCB dcbSerialParams = {0};
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+    if (!GetCommState(hComm, &dcbSerialParams))
+    {
+        return false;
+    }
+    return true;
 #endif
-#if defined (__linux__) || defined(__APPLE__)
-    return fd >= 0;
+#if defined(__linux__) || defined(__APPLE__)
+    struct termios tty;
+    if (tcgetattr(fd, &tty) != 0)
+        return false;
+    return true;
 #endif
 }
 
