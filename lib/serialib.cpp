@@ -489,10 +489,39 @@ char serialib::openDevice(const char *Device, const unsigned int Bauds,
 bool serialib::isDeviceOpen()
 {
 #if defined(_WIN32) || defined(_WIN64)
-    return hSerial != INVALID_HANDLE_VALUE;
-#endif
-#if defined(__linux__) || defined(__APPLE__)
-    return fd >= 0;
+    // For Windows, check if the handle is valid
+    if (hSerial == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    // Check the state of the serial port
+    DCB dcbSerialParams = {0};
+    if (!GetCommState(hSerial, &dcbSerialParams))
+    {
+        // Handle disconnection: close the device and update state
+        CloseHandle(hSerial);
+        hSerial = INVALID_HANDLE_VALUE;
+        return false;
+    }
+    return true;
+
+#elif defined(__linux__) || defined(__APPLE__)
+    // For Linux/macOS, check if the file descriptor is valid
+    if (fd == -1)
+    {
+        return false;
+    }
+
+    // Check the status of the serial port
+    int status;
+    if (ioctl(fd, TIOCMGET, &status) == -1)
+    {
+        // Handle disconnection: close the device and update state
+        closeDevice();
+        return false;
+    }
+    return true;
 #endif
 }
 

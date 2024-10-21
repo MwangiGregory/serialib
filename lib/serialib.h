@@ -51,6 +51,7 @@ This is a licence-free software, it can be used by anyone who try to build a bet
 #include <sys/ioctl.h>
 #endif
 
+#include <errno.h>
 /*! To avoid unused parameters */
 #define UNUSED(x) (void)(x)
 
